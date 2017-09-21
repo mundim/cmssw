@@ -26,6 +26,7 @@
 #include <map>
 #include <cmath>
 #include <math.h>
+#include <tuple>
 
 #include "SimTransport/HectorProducer/interface/CTPPSHectorParameters.h"
 
@@ -75,6 +76,8 @@ class CTPPSHector {
 
         std::vector<LHCTransportLink> & getCorrespondenceMap() { return theCorrespondenceMap; }
 
+        void BeamPositionCalibration(double& ,double& );
+        void BeamProfile();
     private:
         // Defaults
         double lengthctpps ;
@@ -90,13 +93,21 @@ class CTPPSHector {
 
         //HECTOR CTPPS Parameters
         bool fCrossAngleCorr;
-        double fCrossingAngle;
+        double fCrossingAngleBeam1;
+        double fCrossingAngleBeam2;
         double fBeamMomentum;
         double fBeamEnergy;
         double fVtxMeanX;
         double fVtxMeanY;
         double fVtxMeanZ;
         double fMomentumMin;
+        double fBeamXatIP;
+        double fBeamYatIP;
+        std::vector<std::tuple<double,double,double> >  PosP;
+        std::vector<std::tuple<double,double,double> >  PosN;
+        std::vector<std::tuple<double,double,double> >  BdistP;
+        std::vector<std::tuple<double,double,double> >  BdistN;
+
 
         edm::ESHandle < ParticleDataTable > pdt;
 
