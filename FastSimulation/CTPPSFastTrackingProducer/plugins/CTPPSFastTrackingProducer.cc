@@ -28,7 +28,7 @@ Implementation:
 // constructors and destructor
 //
 CTPPSFastTrackingProducer::CTPPSFastTrackingProducer(const edm::ParameterSet& iConfig):
-    m_verbosity(false), fBeamMomentum(0.), fCrossAngleCorr(false), fCrossingAngle(0.)
+    m_verbosity(false), fBeamMomentum(0.), fCrossAngleCorr(false), fCrossingAngleBeam1(0.),fCrossingAngleBeam2(0.)
 {
     //register your products
     produces<edm::CTPPSFastTrackContainer>("CTPPSFastTrack");
@@ -44,7 +44,8 @@ CTPPSFastTrackingProducer::CTPPSFastTrackingProducer(const edm::ParameterSet& iC
     fBeamEnergy = iConfig.getParameter<double>("BeamEnergy"); // beam energy in GeV
     fBeamMomentum = sqrt(fBeamEnergy*fBeamEnergy - ProtonMassSQ); 
     fCrossAngleCorr = iConfig.getParameter<bool>("CrossAngleCorr");
-    fCrossingAngle = iConfig.getParameter<double>("CrossingAngle");
+    fCrossingAngleBeam1 = iConfig.getParameter<double>("CrossingAngleBeam1");
+    fCrossingAngleBeam2 = iConfig.getParameter<double>("CrossingAngleBeam2");
   
     //Read detectors positions and parameters
 
@@ -76,6 +77,9 @@ CTPPSFastTrackingProducer::CTPPSFastTrackingProducer(const edm::ParameterSet& iC
     // reading beamlines
     FileInPath b1(beam1filename.c_str());
     FileInPath b2(beam2filename.c_str());
+    extern int kickers_on;
+    kickers_on = 0;
+
     //
     if(lengthctpps>0. ) {
         m_beamlineCTPPS1 = std::unique_ptr<H_BeamLine>(new H_BeamLine( -1, lengthctpps + 0.1 )); // (direction, length)
@@ -83,7 +87,7 @@ CTPPSFastTrackingProducer::CTPPSFastTrackingProducer(const edm::ParameterSet& iC
         m_beamlineCTPPS1->fill( b2.fullPath(), 1, "IP5" );
         m_beamlineCTPPS2->fill( b1.fullPath(), 1, "IP5" );
         m_beamlineCTPPS1->offsetElements( 120, 0.097 );
-        m_beamlineCTPPS2->offsetElements( 120, 0.097 );
+        m_beamlineCTPPS2->offsetElements( 120,-0.097 );
         m_beamlineCTPPS1->calcMatrix();
         m_beamlineCTPPS2->calcMatrix();
     } else {
@@ -246,9 +250,10 @@ bool CTPPSFastTrackingProducer::SearchTrack(int i,int j,int Direction,double& xi
             std::isnan(thx)  || std::isinf(thx) ||
             std::isnan(thy)  || std::isinf(thy)) return false;
     //
-    if (-thx<-100||-thx>300) return false;
-    if (thy<-200||thy>200) return false;
-    //
+    //if (-thx<-100||-thx>300) return false;
+    //if (thy<-200||thy>200) return false;
+    
+    (Direction>0)?thx+=fCrossingAngleBeam2:thx+=fCrossingAngleBeam1;
     if ( m_verbosity ) std::cout << "thx " << thx << " thy " << thy << " eloss " << eloss << std::endl;
 
     // Get the start point of the reconstructed track near the origin made by Hector
@@ -291,7 +296,7 @@ void CTPPSFastTrackingProducer::ReconstructArm(H_RecRPObject* pps_station, doubl
     pps_station->setPositions(x1,y1,x2,y2);
     double energy = pps_station->getE(AM); // dummy call needed to calculate some Hector internal parameter
     if (std::isnan(energy)||std::isinf(energy)) return;
-    tx =  -pps_station->getTXIP();  // change orientation to CMS
+    tx =  pps_station->getTXIP();  // change orientation to CMS
     ty =  pps_station->getTYIP();
     eloss = pps_station->getE();
 }
@@ -302,23 +307,22 @@ void CTPPSFastTrackingProducer::LorentzBoost(LorentzVector& p_out, const string&
     double microrad = 1.e-6;
     TMatrixD tmpboost(4,4);
     double alpha_ = 0.;
-    double phi_  = fCrossingAngle*microrad;
-    if (p_out.pz()<0) phi_*=-1;
-    tmpboost(0,0) = 1./cos(phi_);
-    tmpboost(0,1) = - cos(alpha_)*sin(phi_);
-    tmpboost(0,2) = - tan(phi_)*sin(phi_);
-    tmpboost(0,3) = - sin(alpha_)*sin(phi_);
-    tmpboost(1,0) = - cos(alpha_)*tan(phi_);
+    double fBoostAngle = (p_out.pz()>0)?fCrossingAngleBeam2*microrad:-fCrossingAngleBeam1*microrad;
+    tmpboost(0,0) = 1./cos(fBoostAngle);
+    tmpboost(0,1) = - cos(alpha_)*sin(fBoostAngle);
+    tmpboost(0,2) = - tan(fBoostAngle)*sin(fBoostAngle);
+    tmpboost(0,3) = - sin(alpha_)*sin(fBoostAngle);
+    tmpboost(1,0) = - cos(alpha_)*tan(fBoostAngle);
     tmpboost(1,1) = 1.;
-    tmpboost(1,2) = cos(alpha_)*tan(phi_);
+    tmpboost(1,2) = cos(alpha_)*tan(fBoostAngle);
     tmpboost(1,3) = 0.;
     tmpboost(2,0) = 0.;
-    tmpboost(2,1) = - cos(alpha_)*sin(phi_);
-    tmpboost(2,2) = cos(phi_);
-    tmpboost(2,3) = - sin(alpha_)*sin(phi_);
-    tmpboost(3,0) = - sin(alpha_)*tan(phi_);
+    tmpboost(2,1) = - cos(alpha_)*sin(fBoostAngle);
+    tmpboost(2,2) = cos(fBoostAngle);
+    tmpboost(2,3) = - sin(alpha_)*sin(fBoostAngle);
+    tmpboost(3,0) = - sin(alpha_)*tan(fBoostAngle);
     tmpboost(3,1) = 0.;
-    tmpboost(3,2) = sin(alpha_)*tan(phi_);
+    tmpboost(3,2) = sin(alpha_)*tan(fBoostAngle);
     tmpboost(3,3) = 1.;
 
     if(frame=="LAB") tmpboost.Invert();
@@ -380,8 +384,8 @@ void CTPPSFastTrackingProducer::FastReco(int Direction,H_RecRPObject* station)
                     theta = CLHEP::pi - sqrt(thx*thx+thy*thy)*urad;
                     MatchCellId(cellId, recCellId_B, recTof_B, matchCellId, recTof); 
                 }
-                phi   = (Direction>0)?-atan2(thy,-thx):atan2(thy,thx); // defined according to the positive direction
-
+                //phi   = (Direction>0)?-atan2(thy,thx):atan2(thy,thx); // defined according to the positive direction
+                phi   = atan2(thy,thx); // defined according to the positive direction
 
                 double px = partP*sin(theta)*cos(phi);
                 double py = partP*sin(theta)*sin(phi);
@@ -389,13 +393,14 @@ void CTPPSFastTrackingProducer::FastReco(int Direction,H_RecRPObject* station)
                 double  e = sqrt(partP*partP+ProtonMassSQ);
                 LorentzVector p(px,py,pz,e);
                 // Invert the Lorentz boost made to take into account the crossing angle during simulation
-                if (fCrossAngleCorr) LorentzBoost(p,"MC");
+                //if (fCrossAngleCorr) LorentzBoost(p,"MC");
                 //Getting the Xi and t (squared four momentum transferred) of the reconstructed track
                 Get_t_and_xi(const_cast<LorentzVector*>(&p),t,xi);
                 double pxx = p.px(); double pyy = p.py(); double pzz = p.pz(); //double ee = p.E();	
                 math::XYZVector momentum (pxx,pyy,pzz);
                 math::XYZPoint vertex (x0,y0,0);
 
+                //std::cout << "thx " << thx << " thy " << thy << " Px: " << px << " Py: " << py << " Pz: " << pz << " Phi: " << p.phi() <<  " phi2: " << phi << std::endl;
                 track.setp(momentum);
                 track.setvertex(vertex);
                 track.sett(t);

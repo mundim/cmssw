@@ -110,7 +110,8 @@ class CTPPSFastTrackingProducer : public edm::stream::EDProducer<> {
         double fBeamEnergy;
         double fBeamMomentum;
         bool   fCrossAngleCorr;
-        double fCrossingAngle;
+        double fCrossingAngleBeam1;
+        double fCrossingAngleBeam2;
         ////////////////////////////////////////////////
         std::unique_ptr<CTPPSTrkStation> TrkStation_F; // auxiliary object with the tracker geometry
         std::unique_ptr<CTPPSTrkStation> TrkStation_B;

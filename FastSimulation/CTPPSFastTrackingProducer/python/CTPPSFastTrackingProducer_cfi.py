@@ -6,7 +6,8 @@ TPBeam1          = TransportParameters.LHCTransport.CTPPSHector.Beam1
 TPBeam2          = TransportParameters.LHCTransport.CTPPSHector.Beam2
 TPBeamEnergy     = TransportParameters.LHCTransport.CTPPSHector.BeamEnergy
 TPCrossAngleCorr = TransportParameters.LHCTransport.CTPPSHector.CrossAngleCorr
-TPCrossingAngle  = TransportParameters.LHCTransport.CTPPSHector.CrossingAngle
+TPCrossingAngleBeam1  = TransportParameters.LHCTransport.CTPPSHector.CrossingAngleBeam1
+TPCrossingAngleBeam2  = TransportParameters.LHCTransport.CTPPSHector.CrossingAngleBeam2
 TPBeamLineLengthCTPPS = TransportParameters.LHCTransport.CTPPSHector.BeamLineLengthCTPPS
 
 
@@ -44,7 +45,8 @@ CTPPSFastTracks = cms.EDProducer('CTPPSFastTrackingProducer',
                 Beam2 = TPBeam2,
 		BeamEnergy = TPBeamEnergy,
 		CrossAngleCorr = TPCrossAngleCorr,
-		CrossingAngle = TPCrossingAngle,
+		CrossingAngleBeam1 = TPCrossingAngleBeam1,
+		CrossingAngleBeam2 = TPCrossingAngleBeam2,
 		BeamLineLengthCTPPS = TPBeamLineLengthCTPPS,
 		#CTPPSSimHitProducer
 		Z_Tracker1 = ZTracker1Position,# first tracker z position in m
