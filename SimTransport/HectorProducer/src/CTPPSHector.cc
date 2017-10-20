@@ -176,33 +176,30 @@ void CTPPSHector::add( const HepMC::GenEvent * evt ,const edm::EventSetup & iSet
 
                     e = sqrt(pow(mass,2)+pow(px,2)+pow(py,2)+pow(pz,2));
 
-
                     TXforPosition=(pz>0)?fCrossingAngleBeam2:fCrossingAngleBeam1; // in the CMS ref. framne
                     // Apply Beam and Crossing Angle Corrections
                     LorentzVector p_out(px,py,pz,e);
                     ApplyBeamCorrection(p_out, engine);
-                    //if (fCrossAngleCorr) { LorentzBoost(const_cast<LorentzVector&>(p_out),"LAB"); TXforPosition=0.;}
 
                     // from mm to cm        
                     double XforPosition = (*eventParticle)->production_vertex()->position().x()/cm;//cm
                     double YforPosition = (*eventParticle)->production_vertex()->position().y()/cm;//cm
                     double ZforPosition = (*eventParticle)->production_vertex()->position().z()/cm;//cm
 
-                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << " fVtxMeanX: " << fVtxMeanX << " fVtxMeanY: " << fVtxMeanY << " fVtxMeanZ: "  << fVtxMeanZ ;
+                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") <<
+                                    " fVtxMeanX: " << fVtxMeanX << " fVtxMeanY: " << fVtxMeanY << " fVtxMeanZ: "  << fVtxMeanZ ;
                     // It is important to set the Position before the 4Momentum otherwise HECTOR resets variables
                     h_p->setPosition(-((XforPosition-fVtxMeanX)*cm_to_um+fBeamXatIP*mm_to_um),(YforPosition-fVtxMeanY)*cm_to_um+fBeamYatIP*mm_to_um,
                                         -TXforPosition,TYforPosition,-(ZforPosition)*cm_to_m);
                     
-                    h_p->set4Momentum(px, py, abs(pz), e );
+                    h_p->set4Momentum(p_out.px(), p_out.py(), abs(p_out.pz()), p_out.e());
 
                     m_beamPart[line] = h_p;
                     m_direct[line] = 0;
                     m_direct[line] = ( pz > 0 ) ? 1 : -1;
-
-                    m_eta[line] = (*eventParticle)->momentum().eta();
+                    m_eta[line] = p_out.eta();
                     m_pdg[line] = (*eventParticle)->pdg_id();
-                    m_pz[line]  = (*eventParticle)->momentum().pz();
-
+                    m_pz[line]  = p_out.pz();
                     if(m_verbosity) { 
                         LogDebug("CTPPSHectorEventProcessing") << "CTPPSHector:add: barcode = " << line 
                             << " status = " << g->status() 
@@ -246,14 +243,16 @@ void CTPPSHector::filterCTPPS(TRandom3* rootEngine){
  		    part->computePath(&*m_beamlineCTPPS1);
 
                     is_stop = part->stopped(&* m_beamlineCTPPS1 );
-                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << "CTPPSHector:filterCTPPS: barcode = " << line << " positive is_stop=  "<< is_stop;
+                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
+                                    "CTPPSHector:filterCTPPS: barcode = " << line << " positive is_stop=  "<< is_stop;
                 }
                 else if ( direction == -1 && m_beamlineCTPPS2 != 0 ){
 
                     part->computePath(&*m_beamlineCTPPS2 );
 
                     is_stop = part->stopped(&*m_beamlineCTPPS2 );
-                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << "CTPPSHector:filterCTPPS: barcode = " << line << " negative is_stop=  "<< is_stop;
+                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
+                                    "CTPPSHector:filterCTPPS: barcode = " << line << " negative is_stop=  "<< is_stop;
                 }
                 else {
                     is_stop = true;
@@ -262,14 +261,16 @@ void CTPPSHector::filterCTPPS(TRandom3* rootEngine){
 
                 //propagating
                 m_isStoppedctpps[line] = is_stop;
-                if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << "CTPPSHector:filterCTPPS: barcode = " << line << " isStopped=" << (*m_isStoppedctpps.find(line)).second;
+                if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
+                                "CTPPSHector:filterCTPPS: barcode = " << line << " isStopped=" << (*m_isStoppedctpps.find(line)).second;
 
                 if (!is_stop) {
                     if ( direction == 1 ) part->propagate( m_f_ctpps_f ); 
                     if ( direction == -1 ) part->propagate( m_b_ctpps_b );  
                     x1_ctpps = -part->getX()/millimeter;
                     y1_ctpps = part->getY()/millimeter;
-                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << "CTPPSHector:filterCTPPS: barcode = " << line << " x=  "<< x1_ctpps <<" y= " << y1_ctpps;
+                    if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
+                                   "CTPPSHector:filterCTPPS: barcode = " << line << " x=  "<< x1_ctpps <<" y= " << y1_ctpps;
 
                     m_xAtTrPoint[line]  = x1_ctpps;
                     m_yAtTrPoint[line]  = y1_ctpps;
@@ -281,7 +282,8 @@ void CTPPSHector::filterCTPPS(TRandom3* rootEngine){
             }// if isCharged
             else {
                 m_isStoppedctpps[line] = true;// imply that neutral particles stopped to reach 420m
-                if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << "CTPPSHector:filterCTPPS: barcode = " << line << " isStopped=" << (*m_isStoppedctpps.find(line)).second;
+                if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
+                                "CTPPSHector:filterCTPPS: barcode = " << line << " isStopped=" << (*m_isStoppedctpps.find(line)).second;
             }
 
         } // for (it = m_beamPart.begin(); it != m_beamPart.end(); it++ ) 
