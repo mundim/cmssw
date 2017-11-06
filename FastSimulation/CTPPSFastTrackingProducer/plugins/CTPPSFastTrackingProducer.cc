@@ -78,7 +78,8 @@ CTPPSFastTrackingProducer::CTPPSFastTrackingProducer(const edm::ParameterSet& iC
     FileInPath b1(beam1filename.c_str());
     FileInPath b2(beam2filename.c_str());
     extern int kickers_on;
-    kickers_on = 0;
+    std::cout << "Kickers " << kickers_on  << std::endl;
+    kickers_on=0;
 
     //
     if(lengthctpps>0. ) {
@@ -113,7 +114,6 @@ CTPPSFastTrackingProducer::CTPPSFastTrackingProducer(const edm::ParameterSet& iC
     double pos_tof = fToFInsertion*fBeamXRMS_ToF+fToFXOffset;
     detToF_F =std::unique_ptr<CTPPSToFDetector>(new CTPPSToFDetector(fToFNCellX,fToFNCellY,vToFCellWidth,fToFCellHeight,fToFPitchX,fToFPitchY,pos_tof,fTimeSigma)); 
     detToF_B =std::unique_ptr<CTPPSToFDetector>(new CTPPSToFDetector(fToFNCellX,fToFNCellY,vToFCellWidth,fToFCellHeight,fToFPitchX,fToFPitchY,pos_tof,fTimeSigma)); 
-
 }
 CTPPSFastTrackingProducer::~CTPPSFastTrackingProducer()
 {
@@ -126,6 +126,9 @@ CTPPSFastTrackingProducer::~CTPPSFastTrackingProducer()
 CTPPSFastTrackingProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     using namespace edm;
+    extern int kickers_on;
+    std::cout << "Kickers " << kickers_on  << std::endl;
+    kickers_on=0;
     //using namespace std;	
     TrackerStationStarting();
     Handle<CTPPSFastRecHitContainer> recHits;
@@ -149,6 +152,9 @@ CTPPSFastTrackingProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
 }//end
 void CTPPSFastTrackingProducer::beginEvent(edm::Event& event, const edm::EventSetup& eventSetup)
 {
+    extern int kickers_on;
+    std::cout << "Kickers " << kickers_on  << std::endl;
+    kickers_on=0;
 
     TrackerStationStarting();
 
@@ -253,8 +259,9 @@ bool CTPPSFastTrackingProducer::SearchTrack(int i,int j,int Direction,double& xi
     //if (-thx<-100||-thx>300) return false;
     //if (thy<-200||thy>200) return false;
     
-    (Direction>0)?thx+=fCrossingAngleBeam2:thx+=fCrossingAngleBeam1;
-    if ( m_verbosity ) std::cout << "thx " << thx << " thy " << thy << " eloss " << eloss << std::endl;
+    /*if ( m_verbosity ) */std::cout << "thx " << thx << " thy " << thy << " eloss " << eloss << " ";
+    //(Direction>0)?thx+=fCrossingAngleBeam2:thx+=fCrossingAngleBeam1; // still in LHC frame
+    /*if ( m_verbosity ) */std::cout << "thx " << thx << " thy " << thy << " eloss " << eloss << std::endl;
 
     // Get the start point of the reconstructed track near the origin made by Hector
     x0 = -station->getX0()*um_to_cm;
@@ -296,7 +303,7 @@ void CTPPSFastTrackingProducer::ReconstructArm(H_RecRPObject* pps_station, doubl
     pps_station->setPositions(x1,y1,x2,y2);
     double energy = pps_station->getE(AM); // dummy call needed to calculate some Hector internal parameter
     if (std::isnan(energy)||std::isinf(energy)) return;
-    tx =  pps_station->getTXIP();  // change orientation to CMS
+    tx = -pps_station->getTXIP();  // change orientation to CMS
     ty =  pps_station->getTYIP();
     eloss = pps_station->getE();
 }
@@ -308,21 +315,21 @@ void CTPPSFastTrackingProducer::LorentzBoost(LorentzVector& p_out, const string&
     TMatrixD tmpboost(4,4);
     double alpha_ = 0.;
     double fBoostAngle = (p_out.pz()>0)?fCrossingAngleBeam2*microrad:-fCrossingAngleBeam1*microrad;
-    tmpboost(0,0) = 1./cos(fBoostAngle);
-    tmpboost(0,1) = - cos(alpha_)*sin(fBoostAngle);
-    tmpboost(0,2) = - tan(fBoostAngle)*sin(fBoostAngle);
-    tmpboost(0,3) = - sin(alpha_)*sin(fBoostAngle);
-    tmpboost(1,0) = - cos(alpha_)*tan(fBoostAngle);
+    tmpboost(0,0) = (double)1./cos(fBoostAngle);
+    tmpboost(0,1) = (double)-cos(alpha_)*sin(fBoostAngle);
+    tmpboost(0,2) = (double)-tan(fBoostAngle)*sin(fBoostAngle);
+    tmpboost(0,3) = (double)-sin(alpha_)*sin(fBoostAngle);
+    tmpboost(1,0) = (double)-cos(alpha_)*tan(fBoostAngle);
     tmpboost(1,1) = 1.;
-    tmpboost(1,2) = cos(alpha_)*tan(fBoostAngle);
+    tmpboost(1,2) = (double)cos(alpha_)*tan(fBoostAngle);
     tmpboost(1,3) = 0.;
     tmpboost(2,0) = 0.;
-    tmpboost(2,1) = - cos(alpha_)*sin(fBoostAngle);
-    tmpboost(2,2) = cos(fBoostAngle);
-    tmpboost(2,3) = - sin(alpha_)*sin(fBoostAngle);
-    tmpboost(3,0) = - sin(alpha_)*tan(fBoostAngle);
+    tmpboost(2,1) = (double)-cos(alpha_)*sin(fBoostAngle);
+    tmpboost(2,2) = (double)cos(fBoostAngle);
+    tmpboost(2,3) = (double)-sin(alpha_)*sin(fBoostAngle);
+    tmpboost(3,0) = (double)-sin(alpha_)*tan(fBoostAngle);
     tmpboost(3,1) = 0.;
-    tmpboost(3,2) = sin(alpha_)*tan(fBoostAngle);
+    tmpboost(3,2) = (double)sin(alpha_)*tan(fBoostAngle);
     tmpboost(3,3) = 1.;
 
     if(frame=="LAB") tmpboost.Invert();
@@ -393,7 +400,7 @@ void CTPPSFastTrackingProducer::FastReco(int Direction,H_RecRPObject* station)
                 double  e = sqrt(partP*partP+ProtonMassSQ);
                 LorentzVector p(px,py,pz,e);
                 // Invert the Lorentz boost made to take into account the crossing angle during simulation
-                //if (fCrossAngleCorr) LorentzBoost(p,"MC");
+                if (fCrossAngleCorr) LorentzBoost(p,"MC");
                 //Getting the Xi and t (squared four momentum transferred) of the reconstructed track
                 Get_t_and_xi(const_cast<LorentzVector*>(&p),t,xi);
                 double pxx = p.px(); double pyy = p.py(); double pzz = p.pz(); //double ee = p.E();	
