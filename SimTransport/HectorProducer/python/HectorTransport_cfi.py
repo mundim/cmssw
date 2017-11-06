@@ -19,7 +19,9 @@ LHCTransport = cms.EDProducer("HectorProducer",
         sigmaEnergy = cms.double(0.0),     ## beam energy dispersion (GeV); if =0.0 the default(=0.79) is used
         smearAng = cms.bool(True),       ## if False: no Angle smearing(i.e. sigmaSTX(Y) =0.0)
         sigmaSTX = cms.double(0.0),     ## x angle dispersion at IP (urad); if =0.0 the default(=30.23) is used
-        sigmaSTY = cms.double(0.0)      ## y angle dispersion at IP (urad); if =0.0 the default(=30.23) is used
+        sigmaSTY = cms.double(0.0),      ## y angle dispersion at IP (urad); if =0.0 the default(=30.23) is used
+        sigmaSX = cms.double(12.01),     ## x dispersion at IP (um); sqrt(emittance*beta_x*)
+        sigmaSY = cms.double(12.01)      ## y dispersion at IP (um); 
     )
 )
 

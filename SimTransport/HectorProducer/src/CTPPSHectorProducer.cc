@@ -61,6 +61,8 @@ void CTPPSHectorProducer::endRun(const edm::Run & r,const edm::EventSetup& c) {}
 
 void CTPPSHectorProducer::produce(edm::Event & iEvent, const edm::EventSetup & es){
 
+    extern int kickers_on;
+    kickers_on=1;
     using namespace edm;
     using namespace std;
     HepMC::GenEvent * evt_;
@@ -115,6 +117,6 @@ void CTPPSHectorProducer::produce(edm::Event & iEvent, const edm::EventSetup & e
 
     iEvent.put(std::move(NewCorrespondenceMap));
     hector_ctpps->clear();
-
+    kickers_on=0;
 }
 DEFINE_FWK_MODULE (CTPPSHectorProducer);

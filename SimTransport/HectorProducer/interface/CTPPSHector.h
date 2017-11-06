@@ -58,6 +58,7 @@ class CTPPSHector {
 
         // New function to calculate the LorentzBoost 
         void LorentzBoost(LorentzVector& p_out, const string& frame);
+        void LorentzBoost(H_BeamParticle& p_out, const string& frame);
 
         void set_BeamEnergy(double e) {fBeamEnergy=e;fBeamMomentum = sqrt(fBeamEnergy*fBeamEnergy - ProtonMassSQ);};
 
@@ -76,7 +77,9 @@ class CTPPSHector {
 
         std::vector<LHCTransportLink> & getCorrespondenceMap() { return theCorrespondenceMap; }
 
-        void BeamPositionCalibration(double& ,double& );
+        CLHEP::HepLorentzVector HectorParticle2LorentzVector(H_BeamParticle);
+
+        void BeamPositionCalibration(double& ,double& ,double );
         void BeamProfile();
     private:
         // Defaults
@@ -88,6 +91,8 @@ class CTPPSHector {
         bool m_smearE;
         double m_sigmaSTX;
         double m_sigmaSTY;
+        double m_sigmaSX;
+        double m_sigmaSY;
         float m_f_ctpps_f;
         float m_b_ctpps_b;	
 

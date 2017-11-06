@@ -11,7 +11,8 @@
 #include "CLHEP/Random/RandGauss.h"
 
 #include "TRandom3.h"
-#include <TMatrixD.h>
+#include <TMath.h>
+#include <TMatrixT.h>
 #include <TH2F.h>
 
 #include "H_Parameters.h"
@@ -19,7 +20,7 @@
 #include <math.h>
 
 CTPPSHector::CTPPSHector(const edm::ParameterSet & param, bool verbosity,bool CTPPSTransport) : 
-    m_smearAng(false),m_sig_e(0.),m_smearE(false),m_sigmaSTX(0.),m_sigmaSTY(0.),
+    m_smearAng(false),m_sig_e(0.),m_smearE(false),m_sigmaSTX(0.),m_sigmaSTY(0.),m_sigmaSX(0.),m_sigmaSY(0.),
     fCrossAngleCorr(false),fCrossingAngleBeam1(0.),fCrossingAngleBeam2(0.),fBeamMomentum(0),fBeamEnergy(0),
     fVtxMeanX(0.),fVtxMeanY(0.),fVtxMeanZ(0.),fMomentumMin(0.),
     m_verbosity(verbosity), 
@@ -39,6 +40,8 @@ CTPPSHector::CTPPSHector(const edm::ParameterSet & param, bool verbosity,bool CT
     m_smearAng      = hector_par.getParameter<bool>("smearAng");
     m_sigmaSTX      = hector_par.getParameter<double>("sigmaSTX" );
     m_sigmaSTY      = hector_par.getParameter<double>("sigmaSTY" );
+    m_sigmaSX       = hector_par.getParameter<double>("sigmaSX");
+    m_sigmaSY       = hector_par.getParameter<double>("sigmaSY");
     m_smearE        = hector_par.getParameter<bool>("smearEnergy");
     m_sig_e         = hector_par.getParameter<double>("sigmaEnergy");
     etacut          = hector_par.getParameter<double>("EtaCutForHector" );
@@ -111,11 +114,12 @@ CTPPSHector::CTPPSHector(const edm::ParameterSet & param, bool verbosity,bool CT
         m_beamlineCTPPS2->calcMatrix();
         fBeamXatIP=fVtxMeanX*cm_to_mm; // position in mm
         fBeamYatIP=fVtxMeanY*cm_to_mm;
-        BeamPositionCalibration(fBeamXatIP,fBeamYatIP);
+        BeamPositionCalibration(fBeamXatIP,fBeamYatIP,0.);
         BeamProfile();
     } else {
         if ( m_verbosity ) LogDebug("CTPPSHectorSetup") << "CTPPSHector: WARNING: lengthctpps=  " << lengthctpps;
     } 
+    kickers_on=0;
 }
 
 CTPPSHector::~CTPPSHector(){
@@ -179,7 +183,9 @@ void CTPPSHector::add( const HepMC::GenEvent * evt ,const edm::EventSetup & iSet
                     TXforPosition=(pz>0)?fCrossingAngleBeam2:fCrossingAngleBeam1; // in the CMS ref. framne
                     // Apply Beam and Crossing Angle Corrections
                     LorentzVector p_out(px,py,pz,e);
+                    //LorentzBoost(const_cast<LorentzVector&>(p_out),"LAB");
                     ApplyBeamCorrection(p_out, engine);
+                    //TXforPosition=0.;
 
                     // from mm to cm        
                     double XforPosition = (*eventParticle)->production_vertex()->position().x()/cm;//cm
@@ -190,10 +196,15 @@ void CTPPSHector::add( const HepMC::GenEvent * evt ,const edm::EventSetup & iSet
                                     " fVtxMeanX: " << fVtxMeanX << " fVtxMeanY: " << fVtxMeanY << " fVtxMeanZ: "  << fVtxMeanZ ;
                     // It is important to set the Position before the 4Momentum otherwise HECTOR resets variables
                     h_p->setPosition(-((XforPosition-fVtxMeanX)*cm_to_um+fBeamXatIP*mm_to_um),(YforPosition-fVtxMeanY)*cm_to_um+fBeamYatIP*mm_to_um,
-                                        -TXforPosition,TYforPosition,-(ZforPosition)*cm_to_m);
+                                        -TXforPosition,TYforPosition,-(ZforPosition-fVtxMeanZ)*cm_to_m);
                     
-                    h_p->set4Momentum(p_out.px(), p_out.py(), abs(p_out.pz()), p_out.e());
-
+                    std::cout <<"Befor set4momentum -> TX: " << -h_p->getTX() << " " << h_p->getTY() << std::endl;
+                    h_p->set4Momentum(-p_out.px(), p_out.py(), abs(p_out.pz()), p_out.e());
+                    double tx = atan(-p_out.px()/abs(p_out.pz()))/urad;
+                    double tx2 = atan2(-p_out.px(),abs(p_out.pz()))/urad;
+                    std::cout <<"After set4momentum -> TX: " << h_p->getTX() << " " << h_p->getTY()
+                              << " TX should be:" << -TXforPosition+tx << std::endl;
+                    //BeamProfile();
                     m_beamPart[line] = h_p;
                     m_direct[line] = 0;
                     m_direct[line] = ( pz > 0 ) ? 1 : -1;
@@ -248,7 +259,7 @@ void CTPPSHector::filterCTPPS(TRandom3* rootEngine){
                 }
                 else if ( direction == -1 && m_beamlineCTPPS2 != 0 ){
 
-                    part->computePath(&*m_beamlineCTPPS2 );
+                    part->computePath(&*m_beamlineCTPPS2);
 
                     is_stop = part->stopped(&*m_beamlineCTPPS2 );
                     if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
@@ -271,7 +282,6 @@ void CTPPSHector::filterCTPPS(TRandom3* rootEngine){
                     y1_ctpps = part->getY()/millimeter;
                     if(m_verbosity) LogDebug("CTPPSHectorEventProcessing") << 
                                    "CTPPSHector:filterCTPPS: barcode = " << line << " x=  "<< x1_ctpps <<" y= " << y1_ctpps;
-
                     m_xAtTrPoint[line]  = x1_ctpps;
                     m_yAtTrPoint[line]  = y1_ctpps;
                     m_TxAtTrPoint[line] = -part->getTX(); // needs to be reflected due to the way phi is calculated here
@@ -308,59 +318,68 @@ void CTPPSHector::print() const {
 void CTPPSHector::ApplyBeamCorrection(LorentzVector& p_out, CLHEP::HepRandomEngine* engine)
 {
 
-    double microrad = 1.e-6;
-    double theta = p_out.theta(); if (p_out.pz()<0) theta=CLHEP::pi-theta;
+    double theta = p_out.theta();
+    double thetax = atan(p_out.px()/p_out.pz());
+    double thetay = atan(p_out.py()/p_out.pz());
+    double energy = p_out.e();
+
+    int direction = (p_out.pz()>0)?1:-1;
+
+    if (p_out.pz()<0) theta=CLHEP::pi-theta;
+
     double dtheta_x = (double)(m_smearAng)?CLHEP::RandGauss::shoot(engine,0.,m_sigmaSTX):0;
     double dtheta_y = (double)(m_smearAng)?CLHEP::RandGauss::shoot(engine,0.,m_sigmaSTY):0;
     double denergy  = (double)(m_smearE)?CLHEP::RandGauss::shoot(engine,0.,m_sig_e):0.;
 
-    double p = (double)sqrt((p_out.px())*(p_out.px())+(p_out.py())*(p_out.py())+(p_out.pz())*(p_out.pz()));
-    double px = (double)p*sin(theta+dtheta_x*microrad)*cos(p_out.phi());
-    double py = (double)p*sin(theta+dtheta_y*microrad)*sin(p_out.phi());
-    double pz = (double)p*(cos(theta)+denergy);
+    double s_theta = sqrt(pow(thetax+dtheta_x*urad,2)+pow(thetay+dtheta_y*urad,2)); 
+    double s_phi = atan2(thetay+dtheta_y*urad,thetax+dtheta_x*urad);
+    energy+=denergy;
+    double p = sqrt(pow(energy,2)-ProtonMassSQ);
 
-    if (p_out.pz()<0) pz*=-1;
-
-    double e  = (double)sqrt(px*px+py*py+pz*pz+ProtonMassSQ);
-    p_out.setPx(px);
-    p_out.setPy(py);
-    p_out.setPz(pz);
-    p_out.setE(e);
-
+    p_out.setPx((double)p*sin(s_theta)*cos(s_phi));
+    p_out.setPy((double)p*sin(s_theta)*sin(s_phi));
+    p_out.setPz((double)p*(cos(s_theta))*direction);
+    p_out.setE(energy);
 }
 
+void CTPPSHector::LorentzBoost(H_BeamParticle& h_p, const string& frame)
+{
+     LorentzVector p_out = HectorParticle2LorentzVector(h_p);
+     LorentzBoost(p_out,frame);
+     h_p.set4Momentum(-p_out.px(),p_out.py(),p_out.pz(),p_out.e());
+}
 void CTPPSHector::LorentzBoost(LorentzVector& p_out, const string& frame)
 {
     // Use a matrix
     double microrad = 1.e-6;
-    TMatrixD tmpboost(4,4);
+    TMatrixT<Double_t> tmpboost(4,4);
     double alpha_ = 0.;
     double fBoostAngle = (p_out.pz()>0)?fCrossingAngleBeam2*microrad:-fCrossingAngleBeam1*microrad;
-    tmpboost(0,0) = (double)1./cos(fBoostAngle);
-    tmpboost(0,1) = (double)-cos(alpha_)*sin(fBoostAngle);
-    tmpboost(0,2) = (double)-tan(fBoostAngle)*sin(fBoostAngle);
-    tmpboost(0,3) = (double)-sin(alpha_)*sin(fBoostAngle);
-    tmpboost(1,0) = (double)-cos(alpha_)*tan(fBoostAngle);
+    tmpboost(0,0) = 1./cos(fBoostAngle);
+    tmpboost(0,1) = -cos(alpha_)*sin(fBoostAngle);
+    tmpboost(0,2) = -tan(fBoostAngle)*sin(fBoostAngle);
+    tmpboost(0,3) = -sin(alpha_)*sin(fBoostAngle);
+    tmpboost(1,0) = -cos(alpha_)*tan(fBoostAngle);
     tmpboost(1,1) = 1.;
-    tmpboost(1,2) = (double)cos(alpha_)*tan(fBoostAngle);
+    tmpboost(1,2) = cos(alpha_)*tan(fBoostAngle);
     tmpboost(1,3) = 0.;
     tmpboost(2,0) = 0.;
-    tmpboost(2,1) = (double)-cos(alpha_)*sin(fBoostAngle);
-    tmpboost(2,2) = (double)cos(fBoostAngle);
-    tmpboost(2,3) = (double)-sin(alpha_)*sin(fBoostAngle);
-    tmpboost(3,0) = (double)-sin(alpha_)*tan(fBoostAngle);
+    tmpboost(2,1) = -cos(alpha_)*sin(fBoostAngle);
+    tmpboost(2,2) = cos(fBoostAngle);
+    tmpboost(2,3) = -sin(alpha_)*sin(fBoostAngle);
+    tmpboost(3,0) = -sin(alpha_)*tan(fBoostAngle);
     tmpboost(3,1) = 0.;
-    tmpboost(3,2) = (double)sin(alpha_)*tan(fBoostAngle);
+    tmpboost(3,2) = sin(alpha_)*tan(fBoostAngle);
     tmpboost(3,3) = 1.;
 
     if(frame=="LAB") tmpboost.Invert();
 
-    TMatrixD p4(4,1);
+    TMatrixT<Double_t> p4(4,1);
     p4(0,0) = p_out.e();
     p4(1,0) = p_out.px();
     p4(2,0) = p_out.py();
     p4(3,0) = p_out.pz();
-    TMatrixD p4lab(4,1);
+    TMatrixT<Double_t> p4lab(4,1);
     p4lab = tmpboost * p4;
     p_out.setPx(p4lab(1,0));
     p_out.setPy(p4lab(2,0));
@@ -455,12 +474,12 @@ HepMC::GenEvent * CTPPSHector::addPartToHepMC( HepMC::GenEvent * evt ){
 
     return evt;
 } 
-void CTPPSHector::BeamPositionCalibration(double& xpos,double& ypos)
+void CTPPSHector::BeamPositionCalibration(double& xpos,double& ypos,double q2)
 {
-     double sigx_target=1e-8;
-     double sigy_target=1e-8;
+     double sigx_target=1e-3;
+     double sigy_target=1e-3;
 //
-     double deltax=1.0;
+     double deltax=(q2>0)?0.0:1.0;
      double deltay=1.0;
      double sigx = 0.;
      double sigy = 0.;
@@ -470,6 +489,10 @@ void CTPPSHector::BeamPositionCalibration(double& xpos,double& ypos)
      double last_sigy=0.;
      H_BeamParticle h_pp;
      H_BeamParticle h_pn;
+//
+     //LorentzBoost(h_pp,"LAB");
+     //LorentzBoost(h_pn,"LAB");
+//
      int dirx=1;
      int diry=1;
      int nInteractions=0;
@@ -479,6 +502,8 @@ void CTPPSHector::BeamPositionCalibration(double& xpos,double& ypos)
         nInteractions++;
         h_pp.setPosition(-xpos*mm_to_um,ypos*mm_to_um,h_pp.getTX()-fCrossingAngleBeam2,0,-fVtxMeanZ*cm_to_m); // the position is given in the CMS frame
         h_pn.setPosition(-xpos*mm_to_um,ypos*mm_to_um,h_pn.getTX()-fCrossingAngleBeam1,0,-fVtxMeanZ*cm_to_m);
+        //h_pp.setPosition(-xpos*mm_to_um,ypos*mm_to_um,h_pp.getTX(),0,-fVtxMeanZ*cm_to_m); // the position is given in the CMS frame
+        //h_pn.setPosition(-xpos*mm_to_um,ypos*mm_to_um,h_pn.getTX(),0,-fVtxMeanZ*cm_to_m);
         h_pp.computePath(&*m_beamlineCTPPS1);
         h_pn.computePath(&*m_beamlineCTPPS2);
         sigx=0.;
@@ -512,37 +537,41 @@ void CTPPSHector::BeamPositionCalibration(double& xpos,double& ypos)
            if (sigy>last_sigy) {diry*=-1;nDirchgy++;}
            if (nInteractions>1) {deltay*=0.9;nDirchgy=0;}
         }
+        double rel_diff_x =(q2>0)?0.:sigx_target-sigx;
+        double rel_diff_y =sigy_target-sigy;
+        if (rel_diff_x>0&&rel_diff_y>0) break;
+        if (deltax==0&&deltay==0) break;
         last_sigx=sigx;
         last_sigy=sigy;
-        double rel_diff_x =abs(sigx_min-last_sigx)/sigx_min;
-        double rel_diff_y =abs(sigy_min-last_sigy)/sigy_min;
-        if (nInteractions>5&&rel_diff_x<sigx_target&&deltax<0.0001) deltax=0.;
-        if (nInteractions>5&&rel_diff_y<sigy_target&&deltay<0.0001) deltay=0.;
-        if (deltax==0.&&deltay==0.) break;
         xpos-=(dirx*deltax);
         ypos-=(diry*deltay);
      }
-     if (m_verbosity){
-        LogDebug("CTPPSHector::BeamPositionCalibration") 
-               << "Interaction number " << nInteractions << "\tX = " << xpos << "\tSigmaX = " << sigx_min << "\tDeltaX = " << deltax << "\n"
-               << "                   "                  << "\tY = " << ypos << "\tSigmaY = " << sigy_min << "\tDeltaY = " << deltay << "\n"
+     //if (m_verbosity){
+        //LogDebug("CTPPSHector::BeamPositionCalibration") 
+          std::cout
+               << "Interaction number " << nInteractions << "\tX = " << xpos << " (mm) \tSigmaX = " << sigx_min << "\tDeltaX = " << deltax << "\n"
+               << "                   "                  << "\tY = " << ypos << " (mm) \tSigmaY = " << sigy_min << "\tDeltaY = " << deltay << "\n"
                << "Calibrated beam positions:" << "\n"
-               << " Z (m)   \t X (twiss) \t X (calib) \t Y (twiss) \t Y (calib) \t Delta X \t Delta Y";
+               << " Z (m)   \t X (twiss) \t X (calib) \t Y (twiss) \t Y (calib) \t Delta X \t Delta Y\n";
         for(unsigned int i=0;i<BdistP.size();i++) {
-            LogDebug("CTPPSHector::BeamPositionCalibration")
+            //LogDebug("CTPPSHector::BeamPositionCalibration")
+                std::cout 
                 <<  std::get<0>(BdistP.at(i))<< " \t "<< std::get<1>(PosP.at(i))<< " \t "<< std::get<1>(BdistP.at(i))
                                               << " \t "<< std::get<2>(PosP.at(i))<< " \t " << std::get<2>(BdistP.at(i))
                                               << " \t "<< std::get<1>(BdistP.at(i))-std::get<1>(PosP.at(i))
-                                              << " \t "<< std::get<2>(BdistP.at(i))-std::get<2>(PosP.at(i));
+                                              << " \t "<< std::get<2>(BdistP.at(i))-std::get<2>(PosP.at(i))
+                                              << "\n";
         }
         for(unsigned int i=0;i<BdistN.size();i++) {
-           LogDebug("CTPPSHector::BeamPositionCalibration")
+           //LogDebug("CTPPSHector::BeamPositionCalibration")
+                std::cout 
                  << -std::get<0>(BdistN.at(i))<< " \t "<<std::get<1>(PosN.at(i)) << " \t "<< std::get<1>(BdistN.at(i))
                                               << " \t "<<std::get<2>(PosN.at(i)) << " \t "<<std::get<2>(BdistN.at(i))
                                               << " \t "<<std::get<1>(BdistN.at(i))-std::get<1>(PosN.at(i))
-                                              << " \t "<<std::get<2>(BdistN.at(i))-std::get<2>(PosN.at(i));
+                                              << " \t "<<std::get<2>(BdistN.at(i))-std::get<2>(PosN.at(i))
+                                              << "\n";
         }
-     }
+     //}
      return;
 }
 void CTPPSHector::BeamProfile()
@@ -553,7 +582,6 @@ void CTPPSHector::BeamProfile()
      TH2F* bp1b = new TH2F("bp1b","",1000,-10000,10000,1000,-10000,10000);
      TH2F* bp2b = new TH2F("bp2b","",1000,-10000,10000,1000,-10000,10000);
      TH2F* bp3b = new TH2F("bp3b","",1000,-10000,10000,1000,-10000,10000);
-     double fSX=14.21; double fSY=14.21; // um - values valid for 2016 data taking  - NOMINAL
      for(int j=0;j<2;j++) {
         std::vector<std::tuple<double,double,double> >* DetPos;
         TH2F* prof1;TH2F* prof2; TH2F* prof3;
@@ -574,10 +602,13 @@ void CTPPSHector::BeamProfile()
                      break;
         }
         //crang=0.;
-        for(int i=0;i<1000;i++) {
+        for(int i=0;i<2000;i++) {
            H_BeamParticle h_p; // Hector always gives a positive pz
-           h_p.setPosition(-fBeamXatIP*mm_to_um,fBeamYatIP*mm_to_um,-crang,0.,-fVtxMeanZ*cm_to_m);
-           h_p.smearPos(fSX,fSY); h_p.smearAng(m_sigmaSTX,m_sigmaSTY); h_p.smearE(m_sig_e);
+           h_p.setPosition(fBeamXatIP*mm_to_um,fBeamYatIP*mm_to_um,h_p.getTX()-crang,h_p.getTY(),-fVtxMeanZ*cm_to_m);
+           h_p.smearPos(m_sigmaSX,m_sigmaSY); h_p.smearAng(m_sigmaSTX,m_sigmaSTY); h_p.smearE(m_sig_e);
+
+           //LorentzBoost(h_p,"LAB");
+
            h_p.computePath(beamline);
            h_p.propagate(std::get<0>(DetPos->at(0)));
            prof1->Fill(h_p.getX(),h_p.getY());
@@ -599,9 +630,9 @@ void CTPPSHector::BeamProfile()
      double _beamSigX_Det2_b = bp2b->GetRMS(1);  double _beamSigY_Det2_b = bp2b->GetRMS(2);
      double _beamX_Det3_b    = bp3b->GetMean(1); double _beamY_Det3_b    = bp3b->GetMean(2);
      double _beamSigX_Det3_b = bp3b->GetRMS(1);  double _beamSigY_Det3_b = bp3b->GetRMS(2);
-     //edm::LogInfo("HectorForCTPPSSetup")
-     if (m_verbosity){
-         LogDebug("CTPPSHector::BeamProfile")
+     //if (m_verbosity){
+         //LogDebug("CTPPSHector::BeamProfile")
+           std::cout
              << "HectorForCTPPS: BEAM parameters:\n"
              << "Beam position at Det1 positive side --> " << _beamX_Det1_f << "("<< _beamSigX_Det1_f<<"),\t"<< _beamY_Det1_f << "("<< _beamSigY_Det1_f<<")\n"
              << "Beam position at Det2 positive size --> " << _beamX_Det2_f << "("<< _beamSigX_Det2_f<<"),\t"<< _beamY_Det2_f << "("<< _beamSigY_Det2_f<<")\n"
@@ -616,7 +647,16 @@ void CTPPSHector::BeamProfile()
              << "at Det1 negative side  --> X= " << _beamX_Det1_b*um_to_mm-std::get<1>(PosN.at(0)) << "\tY= "<< _beamY_Det1_b*um_to_mm-std::get<2>(PosN.at(0))<<"\n"
              << "at Det2 negative side  --> X= " << _beamX_Det2_b*um_to_mm-std::get<1>(PosN.at(1)) << "\tY= "<< _beamY_Det2_b*um_to_mm-std::get<2>(PosN.at(1))<<"\n"
              << "at ToF  negative side  --> X= " << _beamX_Det3_b*um_to_mm-std::get<1>(PosN.at(2)) << "\tY= "<< _beamY_Det3_b*um_to_mm-std::get<2>(PosN.at(2))<<"\n";
-     } 
+     //} 
      delete bp1f;delete bp2f;delete bp3f;
              delete bp1b;delete bp2b;delete bp3b;
+}
+CLHEP::HepLorentzVector CTPPSHector::HectorParticle2LorentzVector(H_BeamParticle hp)
+{
+     double partP = sqrt(pow(hp.getE(),2)-ProtonMassSQ);
+     double theta = sqrt(pow(hp.getTX(),2)+pow(hp.getTY(),2))*urad;
+     double pz = partP*cos(theta);
+     double px = -tan((double)hp.getTX()*urad)*pz;//PartP*sin(theta)*cos(phi);
+     double py = tan((double)hp.getTY()*urad)*pz;//partP*sin(theta)*sin(phi);
+     return LorentzVector(px,py,pz,hp.getE());
 }
