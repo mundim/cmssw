@@ -41,7 +41,7 @@ public:
 
 	enum polynomials_selection{AUTOMATIC, PREDEFINED};
 	enum beam_type{lhcb1, lhcb2};
-	void Train(TTree *inp_tree, std::string data_prefix = std::string("def"), polynomials_selection mode = PREDEFINED, int max_degree_x = 10, int max_degree_tx = 10, int max_degree_y = 10, int max_degree_ty = 10, bool common_terms = false, double *prec=NULL);
+	void Train(TTree *inp_tree, std::string data_prefix = std::string("def"), polynomials_selection mode = PREDEFINED, int max_degree_x = 10, int max_degree_tx = 10, int max_degree_y = 10, int max_degree_ty = 10, bool common_terms = false, double *prec=nullptr);
 	void Test(TTree *inp_tree, TFile *f_out, std::string data_prefix = std::string("def"), std::string base_out_dir = std::string(""));
 	void TestAperture(TTree *in_tree, TTree *out_tree);  ///< x, theta_x, y, theta_y, ksi, mad_accepted, parametriz_accepted
 

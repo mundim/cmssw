@@ -46,7 +46,7 @@ ClassImp(TMultiDimFet)
 
 //____________________________________________________________________
 // Static instance. Used with mdfHelper and TMinuit
-TMultiDimFet* TMultiDimFet::fgInstance = 0;
+TMultiDimFet* TMultiDimFet::fgInstance = nullptr;
 
 
 //____________________________________________________________________
@@ -76,11 +76,11 @@ TMultiDimFet::TMultiDimFet()
 
    fIsUserFunction          = kFALSE;
 
-   fHistograms              = 0;
+   fHistograms              = nullptr;
    fHistogramMask           = 0;
 
-   fFitter                  = 0;
-   fgInstance               = 0;
+   fFitter                  = nullptr;
+   fgInstance               = nullptr;
 }
 
 const TMultiDimFet &TMultiDimFet::operator=(const TMultiDimFet &in)
@@ -149,9 +149,9 @@ const TMultiDimFet &TMultiDimFet::operator=(const TMultiDimFet &in)
    fTestPrecision = 0.0;        //! Relative precision of test
    fCorrelationCoeff = 0.0;     //! Multi Correlation coefficient
    fTestCorrelationCoeff = 0.0; //! Multi Correlation coefficient
-   fHistograms = 0;           //! List of histograms
+   fHistograms = nullptr;           //! List of histograms
    fHistogramMask = 0;        //! Bit pattern of hisograms used
-   fFitter = 0;            //! Fit object (MINUIT)
+   fFitter = nullptr;            //! Fit object (MINUIT)
 
    fPolyType = in.fPolyType;             // Type of polynomials to use
    fShowCorrelation = in.fShowCorrelation;      // print correlation matrix
@@ -224,12 +224,12 @@ TMultiDimFet::TMultiDimFet(Int_t dimension,
 
    fIsUserFunction         = kFALSE;
 
-   fHistograms             = 0;
+   fHistograms             = nullptr;
    fHistogramMask          = 0;
 
    fMaxPowers.resize(dimension);
    fMaxPowersFinal.resize(dimension);
-   fFitter                 = 0;
+   fFitter                 = nullptr;
 }
 
 
@@ -380,7 +380,7 @@ void TMultiDimFet::Browse(TBrowser* b)
    // Browse the TMultiDimFet object in the TBrowser.
    if (fHistograms) {
       TIter next(fHistograms);
-      TH1* h = 0;
+      TH1* h = nullptr;
       while ((h = (TH1*)next()))
          b->Add(h,h->GetName());
    }
@@ -710,7 +710,7 @@ void TMultiDimFet::Fit(Option_t *option)
    if (!opt.Contains("m"))
       return;
 
-   fFitter = TVirtualFitter::Fitter(0,fNCoefficients);
+   fFitter = TVirtualFitter::Fitter(nullptr,fNCoefficients);
    fFitter->SetFCN(mdfHelper);
 
    const Int_t  maxArgs = 16;

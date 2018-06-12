@@ -59,7 +59,7 @@ void HectorTransport::process( const HepMC::GenEvent * ev , const edm::EventSetu
 }
 bool HectorTransport::transportProton(const HepMC::GenParticle* gpart)
 {
-     H_BeamParticle* h_p  = NULL;
+     H_BeamParticle* h_p  = nullptr;
 
      double px,py,pz,e;
      unsigned int line = (gpart)->barcode();
@@ -110,7 +110,7 @@ bool HectorTransport::transportProton(const HepMC::GenParticle* gpart)
      float x1_ctpps;
      float y1_ctpps;
 
-     H_BeamLine* _beamline = NULL;
+     H_BeamLine* _beamline = nullptr;
      double _targetZ=0;
      switch (direction) { 
              case -1: _beamline = &*m_beamline56;// negative side propagation
@@ -167,8 +167,8 @@ void HectorTransport::GenProtonsLoop( const HepMC::GenEvent * evt ,const edm::Ev
 bool HectorTransport::SetBeamLine()
 {
 
-    m_beamline45=NULL;
-    m_beamline56=NULL;
+    m_beamline45=nullptr;
+    m_beamline56=nullptr;
     edm::FileInPath b1(beam1filename.c_str());
     edm::FileInPath b2(beam2filename.c_str());
     if(m_verbosity) {

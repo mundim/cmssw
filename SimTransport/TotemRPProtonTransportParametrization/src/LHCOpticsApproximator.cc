@@ -112,7 +112,7 @@ double LHCOpticsApproximator::ParameterOutOfRangePenalty(double in[],
 bool LHCOpticsApproximator::Transport(const double *in, double *out,
     bool check_apertures, bool invert_beam_coord_sytems) const
 {
-  if(in==NULL || out==NULL || !trained_)
+  if(in==nullptr || out==nullptr || !trained_)
     return false;
 
   bool res = CheckInputRange(in);
@@ -160,7 +160,7 @@ bool LHCOpticsApproximator::Transport2D(const double *in, double *out,
     bool check_apertures, bool invert_beam_coord_sytems) const
     //return true if transport possible, double x, y
 {
-  if(in==NULL || out==NULL || !trained_)
+  if(in==nullptr || out==nullptr || !trained_)
     return false;
 
   bool res = CheckInputRange(in);
@@ -237,7 +237,7 @@ bool LHCOpticsApproximator::Transport(const MadKinematicDescriptor *in,
     MadKinematicDescriptor *out, bool check_apertures,
     bool invert_beam_coord_sytems) const
 {
-  if(in==NULL || out==NULL || !trained_)
+  if(in==nullptr || out==nullptr || !trained_)
     return false;
 
   Double_t input[5];
@@ -300,7 +300,7 @@ const LHCOpticsApproximator & LHCOpticsApproximator::operator=(const LHCOpticsAp
 
 void LHCOpticsApproximator::Train(TTree *inp_tree, std::string data_prefix, polynomials_selection mode, int max_degree_x, int max_degree_tx, int max_degree_y, int max_degree_ty, bool common_terms, double *prec)
 {
-  if(inp_tree==NULL)
+  if(inp_tree==nullptr)
     return;
 
   InitializeApproximators(mode, max_degree_x, max_degree_tx, max_degree_y, max_degree_ty, common_terms);
@@ -330,18 +330,18 @@ void LHCOpticsApproximator::Train(TTree *inp_tree, std::string data_prefix, poly
   std::string valid_out_lab = data_prefix + "_valid_out";
 
   //disable not needed branches to speed up the readin
-  inp_tree->SetBranchStatus("*",0);  //disable all branches
-  inp_tree->SetBranchStatus(x_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_x_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(y_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_y_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(ksi_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(x_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_x_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(y_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_y_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(ksi_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(valid_out_lab.c_str(),1);
+  inp_tree->SetBranchStatus("*",false);  //disable all branches
+  inp_tree->SetBranchStatus(x_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_x_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(y_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_y_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(ksi_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(x_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_x_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(y_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_y_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(ksi_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(valid_out_lab.c_str(),true);
 
   //set input data adresses
   inp_tree->SetBranchAddress(x_in_lab.c_str(), &(in_var[0]) );
@@ -363,13 +363,13 @@ void LHCOpticsApproximator::Train(TTree *inp_tree, std::string data_prefix, poly
   Long64_t entries = inp_tree->GetEntries();
   if(entries>0)
   {
-    inp_tree->SetBranchStatus(s_in_lab.c_str(),1);
-    inp_tree->SetBranchStatus(s_out_lab.c_str(),1);
+    inp_tree->SetBranchStatus(s_in_lab.c_str(),true);
+    inp_tree->SetBranchStatus(s_out_lab.c_str(),true);
     inp_tree->GetEntry(0);
     s_begin_ = in_var[5];
     s_end_ = out_var[5];
-    inp_tree->SetBranchStatus(s_in_lab.c_str(),0);
-    inp_tree->SetBranchStatus(s_out_lab.c_str(),0);
+    inp_tree->SetBranchStatus(s_in_lab.c_str(),false);
+    inp_tree->SetBranchStatus(s_out_lab.c_str(),false);
   }
 
   //set input and output variables for fitting
@@ -619,7 +619,7 @@ void LHCOpticsApproximator::SetTermsManually(TMultiDimFet &approximator, variabl
 
 void LHCOpticsApproximator::Test(TTree *inp_tree, TFile *f_out, std::string data_prefix, std::string base_out_dir)
 {
-  if(inp_tree==NULL || f_out==NULL)
+  if(inp_tree==nullptr || f_out==nullptr)
     return;
 
   //in-variables
@@ -647,18 +647,18 @@ void LHCOpticsApproximator::Test(TTree *inp_tree, TFile *f_out, std::string data
   std::string valid_out_lab = data_prefix + "_valid_out";
 
   //disable not needed branches to speed up the readin
-  inp_tree->SetBranchStatus("*",0);  //disable all branches
-  inp_tree->SetBranchStatus(x_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_x_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(y_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_y_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(ksi_in_lab.c_str(),1);
-  inp_tree->SetBranchStatus(x_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_x_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(y_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(theta_y_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(ksi_out_lab.c_str(),1);
-  inp_tree->SetBranchStatus(valid_out_lab.c_str(),1);
+  inp_tree->SetBranchStatus("*",false);  //disable all branches
+  inp_tree->SetBranchStatus(x_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_x_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(y_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_y_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(ksi_in_lab.c_str(),true);
+  inp_tree->SetBranchStatus(x_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_x_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(y_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(theta_y_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(ksi_out_lab.c_str(),true);
+  inp_tree->SetBranchStatus(valid_out_lab.c_str(),true);
 
   //set input data adresses
   inp_tree->SetBranchAddress(x_in_lab.c_str(), &(in_var[0]) );
@@ -724,7 +724,7 @@ void LHCOpticsApproximator::AllocateErrorHists(TH1D *err_hists[4])
     err_hists[i] = new TH1D(error_labels[i].c_str(), error_labels[i].c_str(), 100, -0.0000000001, 0.0000000001);
     err_hists[i]->SetXTitle(error_labels[i].c_str());
     err_hists[i]->SetYTitle("counts");
-    err_hists[i]->SetDirectory(0);
+    err_hists[i]->SetDirectory(nullptr);
     err_hists[i]->SetCanExtend(TH1::kAllAxes);
   }
 }
@@ -732,7 +732,7 @@ void LHCOpticsApproximator::AllocateErrorHists(TH1D *err_hists[4])
 
 void LHCOpticsApproximator::TestAperture(TTree *inp_tree, TTree *out_tree)  //x, theta_x, y, theta_y, ksi, mad_accepted, parametriz_accepted
 {
-  if(inp_tree==NULL || out_tree==NULL)
+  if(inp_tree==nullptr || out_tree==nullptr)
     return;
 
   Long64_t entries = inp_tree->GetEntries();
@@ -795,11 +795,11 @@ void LHCOpticsApproximator::AllocateErrorInputCorHists(TH2D *err_inp_cor_hists[4
     for(int dati=0; dati<5; ++dati)
     {
       std::string name = error_labels[eri] + " vs. " + data_labels[dati];
-      std::string title = name;
+      const std::string& title = name;
       err_inp_cor_hists[eri][dati] = new TH2D(name.c_str(), title.c_str(), 100,-0.0000000001,0.0000000001,100,-0.0000000001,0.0000000001);
       err_inp_cor_hists[eri][dati]->SetXTitle(error_labels[eri].c_str());
       err_inp_cor_hists[eri][dati]->SetYTitle(data_labels[dati].c_str());
-      err_inp_cor_hists[eri][dati]->SetDirectory(0);
+      err_inp_cor_hists[eri][dati]->SetDirectory(nullptr);
       err_inp_cor_hists[eri][dati]->SetCanExtend(TH1::kAllAxes);
     }
   }
@@ -826,11 +826,11 @@ void LHCOpticsApproximator::AllocateErrorOutputCorHists(TH2D *err_out_cor_hists[
     for(int dati=0; dati<5; ++dati)
     {
       std::string name = error_labels[eri] + " vs. " + data_labels[dati];
-      std::string title = name;
+      const std::string& title = name;
       err_out_cor_hists[eri][dati] = new TH2D(name.c_str(), title.c_str(), 100,-0.0000000001,0.0000000001,100,-0.0000000001,0.0000000001);
       err_out_cor_hists[eri][dati]->SetXTitle(error_labels[eri].c_str());
       err_out_cor_hists[eri][dati]->SetYTitle(data_labels[dati].c_str());
-      err_out_cor_hists[eri][dati]->SetDirectory(0);
+      err_out_cor_hists[eri][dati]->SetDirectory(nullptr);
       err_out_cor_hists[eri][dati]->SetCanExtend(TH1::kAllAxes);
     }
   }
@@ -880,7 +880,7 @@ void LHCOpticsApproximator::DeleteErrorCorHistograms(TH2D *err_cor_hists[4][5])
 
 void LHCOpticsApproximator::WriteHistograms(TH1D *err_hists[4], TH2D *err_inp_cor_hists[4][5], TH2D *err_out_cor_hists[4][5], TFile *f_out, std::string base_out_dir)
 {
-  if(f_out==NULL)
+  if(f_out==nullptr)
     return;
 
   f_out->cd();
