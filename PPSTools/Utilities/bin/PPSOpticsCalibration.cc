@@ -27,8 +27,8 @@ int main(int argc, char** argv)
          ("BeamE"           ,po::value<float>(&BeamE)->default_value(6500.), "Beam energy (6500 GeV)")
          ("BeamL"           ,po::value<int>(&BeamL)->default_value(250)  , "Beam line length (250 m)")
          ("Nevents"         ,po::value<int>(&Nevents)->default_value(1000000)  , "Number of events (1M)")
-         ("Align"           ,po::value<bool>(&Align)->default_value(0)  , "Align beamline (0-> No     1-> Yes")
-         ("FixIP"           ,po::value<bool>(&FixIP)->default_value(0)  , "Fix beam at IP (0-> No     1-> Yes")
+         ("Align"           ,po::value<bool>(&Align)->default_value(false)  , "Align beamline (0-> No     1-> Yes")
+         ("FixIP"           ,po::value<bool>(&FixIP)->default_value(false)  , "Fix beam at IP (0-> No     1-> Yes")
          ("output"          ,po::value<std::string>(&OutputFileName)->default_value("beamprofile.root"),"Output filename")
     ;
  
@@ -52,11 +52,11 @@ int main(int argc, char** argv)
 
     if (vm.count("Beam1"))  Beam1FileName = vm["Beam1"].as<std::string>();
     else {std::cout << "Give the beam 1 filename : "; std::cin >> Beam1FileName;}
-    if (Beam1FileName=="") {std::cout << "Beam 1 file name not given. Exiting." << std::endl;exit(1);}
+    if (Beam1FileName.empty()) {std::cout << "Beam 1 file name not given. Exiting." << std::endl;exit(1);}
 
     if (vm.count("Beam2"))  Beam2FileName = vm["Beam2"].as<std::string>();
     else {std::cout << "Give the beam 2 filename : "; std::cin >> Beam2FileName;}
-    if (Beam2FileName=="") {std::cout << "Beam 2 file name not given. Exiting." << std::endl;exit(1);}
+    if (Beam2FileName.empty()) {std::cout << "Beam 2 file name not given. Exiting." << std::endl;exit(1);}
 
     if (vm.count("Xangle1")) Xangle1 = vm["Xangle1"].as<float>();
     else {std::cout << "Give the beam 1 crossing angle : "; std::cin >> Xangle1;} 
@@ -64,8 +64,8 @@ int main(int argc, char** argv)
     if (vm.count("Xangle2")) Xangle2 = vm["Xangle2"].as<float>();
     else {std::cout << "Give the beam 2 crossing angle : "; std::cin >> Xangle2;} 
 
-    TFile* fout = NULL;
-    if (OutputFileName!="") fout = new TFile(OutputFileName.c_str(),"recreate");
+    TFile* fout = nullptr;
+    if (!OutputFileName.empty()) fout = new TFile(OutputFileName.c_str(),"recreate");
 
     std::ifstream tabfileB1(Beam1FileName.c_str());
     if (! tabfileB1.is_open()) cout << "\t ERROR: I Can't open \"" << Beam1FileName << "\"" << endl;
@@ -105,8 +105,8 @@ PPSOpticsCalibrator::PPSOpticsCalibrator(const std::string b1,const std::string 
 
         m_beamline56 = std::unique_ptr<H_BeamLine>(new H_BeamLine( 1, beamline_length )); // (direction, length)
         m_beamline45 = std::unique_ptr<H_BeamLine>(new H_BeamLine(-1, beamline_length )); //
-        m_beamline56->fill( b1.c_str(), 1, "IP5");
-        m_beamline45->fill( b2.c_str(),-1, "IP5");
+        m_beamline56->fill( b1, 1, "IP5");
+        m_beamline45->fill( b2,-1, "IP5");
         m_beamline45->offsetElements( 120, 0.097 );
         m_beamline56->offsetElements( 120,-0.097 );
 /*
@@ -119,7 +119,7 @@ PPSOpticsCalibrator::PPSOpticsCalibrator(const std::string b1,const std::string 
 void PPSOpticsCalibrator::AlignBeamLine()
 {
      
-     H_BeamLine* beamline=NULL;
+     H_BeamLine* beamline=nullptr;
      for(int j:{45,56}) {
         if (j==45) continue;
         switch (j) {
@@ -182,7 +182,7 @@ void PPSOpticsCalibrator::CalibrateBeamPositionatIP(double& xpos,double& ypos)
      double deltay=1.0;
 
      double fVtxMeanZ=0.;
-     while(1) {
+     while(true) {
         nInteractions++;
         H_BeamParticle h_pp; H_BeamParticle h_pn;
 

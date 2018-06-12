@@ -16,8 +16,8 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 #include "H_BeamParticle.h"
 #include "H_BeamLine.h"
 #include <tuple>
