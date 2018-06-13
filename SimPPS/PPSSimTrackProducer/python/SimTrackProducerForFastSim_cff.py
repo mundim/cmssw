@@ -35,6 +35,8 @@ def customise(process):
 
 	#process.schedule.insert(2,process.transport_step)
 
+        process.load("IOMC.RandomEngine.IOMC_cff")
+        process.RandomNumberGeneratorService.LHCTransport.engineName   = cms.untracked.string('TRandom3')
 
 	# output
     	outputModule = None

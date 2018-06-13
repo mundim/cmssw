@@ -20,15 +20,15 @@ def customise(process):
  	process.g4SimHits.StackingAction.MaxTrackTime = cms.double(2000.0)
 
 	process.load('SimTransport.PPSProtonTransport.HectorTransport_cfi')
-	process.LHCTransport.PPSHector.VtxMeanX  = VertexX
-        process.LHCTransport.PPSHector.VtxMeanY  = VertexY
-	process.LHCTransport.PPSHector.VtxMeanZ  = VertexZ
+	process.LHCTransport.VtxMeanX  = VertexX
+        process.LHCTransport.VtxMeanY  = VertexY
+	process.LHCTransport.VtxMeanZ  = VertexZ
 	
+        process.load("IOMC.RandomEngine.IOMC_cff")
+        process.RandomNumberGeneratorService.LHCTransport.engineName   = cms.untracked.string('TRandom3')
+
 	process.transport_step = cms.Path(process.LHCTransport)
 	#process.psim = cms.Sequence(cms.SequencePlaceholder("randomEngineStateProducer")*process.LHCTransport*process.g4SimHits)
 	process.pgen = cms.Sequence(cms.SequencePlaceholder("randomEngineStateProducer")*process.pgen*process.LHCTransport)
-
-        for path in process.paths:
-            print path
 
 	return(process)
