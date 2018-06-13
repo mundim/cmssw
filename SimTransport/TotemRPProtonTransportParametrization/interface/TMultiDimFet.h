@@ -148,14 +148,14 @@ public:
    TMultiDimFet(Int_t dimension,
                 EMDFPolyType type=kMonomials,
                 Option_t *option="");
-   ~TMultiDimFet() override;
+   virtual ~TMultiDimFet();
 
    virtual void     AddRow(const Double_t *x, Double_t D, Double_t E=0);
    virtual void     AddTestRow(const Double_t *x, Double_t D, Double_t E=0);
-   void     Browse(TBrowser* b) override;
-   void     Clear(Option_t *option="") override; // *MENU*
-   void     Draw(Option_t * ="d") override { }
-   virtual Double_t Eval(const Double_t *x, const Double_t *coeff=nullptr) const;
+   virtual void     Browse(TBrowser* b);
+   virtual void     Clear(Option_t *option=""); // *MENU*
+   virtual void     Draw(Option_t * ="d") { }
+   virtual Double_t Eval(const Double_t *x, const Double_t *coeff=0) const;
    virtual void     FindParameterization(double precision); // *MENU*
    virtual void     Fit(Option_t *option=""); // *MENU*
 
@@ -206,12 +206,12 @@ public:
    const TVectorD*  GetVariables()         const { return &fVariables; }
 
    static TMultiDimFet* Instance()               { return fgInstance; }
-   Bool_t   IsFolder()             const override { return kTRUE; }
-   virtual Double_t MakeChi2(const Double_t* coeff=nullptr);
+   virtual Bool_t   IsFolder()             const { return kTRUE; }
+   virtual Double_t MakeChi2(const Double_t* coeff=0);
    virtual void     MakeCode(const char *functionName="MDF", Option_t *option=""); // *MENU*
    virtual void     MakeHistograms(Option_t* option="A"); // *MENU*
    virtual void     MakeMethod(const Char_t* className="MDF", Option_t* option=""); // *MENU*
-   void     Print(Option_t *option="ps") const override; // *MENU*
+   virtual void     Print(Option_t *option="ps") const; // *MENU*
    virtual void     PrintPolynomialsSpecial(Option_t *option="m") const; // *MENU*
 
    void             SetMaxAngle(Double_t angle=0);
