@@ -46,14 +46,14 @@
 class PPSSimTrackProducer : public edm::stream::EDProducer<> {
    public:
       explicit PPSSimTrackProducer(const edm::ParameterSet&);
-      ~PPSSimTrackProducer();
+      ~PPSSimTrackProducer() override;
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
    private:
-      virtual void beginStream(edm::StreamID) override;
-      virtual void produce(edm::Event&, const edm::EventSetup&) override;
-      virtual void endStream() override;
+      void beginStream(edm::StreamID) override;
+      void produce(edm::Event&, const edm::EventSetup&) override;
+      void endStream() override;
 
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
@@ -62,7 +62,7 @@ class PPSSimTrackProducer : public edm::stream::EDProducer<> {
 
       // ----------member data ---------------------------
              bool m_verbosity;
-             ProtonTransport* theTransporter = NULL;
+             ProtonTransport* theTransporter = nullptr;
              std::string m_InTag;
              edm::EDGetTokenT<edm::HepMCProduct> m_InTagToken;
 
@@ -106,7 +106,7 @@ PPSSimTrackProducer::PPSSimTrackProducer(const edm::ParameterSet& iConfig)
     produces<edm::HepMCProduct>();
     produces<edm::LHCTransportLinkContainer>();
 
-    theTransporter = NULL;
+    theTransporter = nullptr;
 
     if (m_transportMethod=="Totem")       {theTransporter = new TotemTransport(iConfig, m_verbosity);}
     else if (m_transportMethod=="Hector") {theTransporter = new HectorTransport(iConfig, m_verbosity);}
