@@ -17,7 +17,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TROOT.h"
-#include "TBrowser.h"
+//#include "TBrowser.h"
 #include "TDecompChol.h"
 #include <iostream>
 #include <map>
@@ -39,14 +39,14 @@
 
 
 //____________________________________________________________________
-static void mdfHelper(int&, double*, double&, double*, int);
+//static void mdfHelper(int&, double*, double&, double*, int);
 
 //____________________________________________________________________
 ClassImp(TMultiDimFet)
 
 //____________________________________________________________________
 // Static instance. Used with mdfHelper and TMinuit
-TMultiDimFet* TMultiDimFet::fgInstance = nullptr;
+//TMultiDimFet* TMultiDimFet::fgInstance = nullptr;
 
 
 //____________________________________________________________________
@@ -79,8 +79,8 @@ TMultiDimFet::TMultiDimFet()
    fHistograms              = nullptr;
    fHistogramMask           = 0;
 
-   fFitter                  = nullptr;
-   fgInstance               = nullptr;
+   //fFitter                  = nullptr;
+   //fgInstance               = nullptr;
 }
 
 const TMultiDimFet &TMultiDimFet::operator=(const TMultiDimFet &in)
@@ -151,7 +151,7 @@ const TMultiDimFet &TMultiDimFet::operator=(const TMultiDimFet &in)
    fTestCorrelationCoeff = 0.0; //! Multi Correlation coefficient
    fHistograms = nullptr;           //! List of histograms
    fHistogramMask = 0;        //! Bit pattern of hisograms used
-   fFitter = nullptr;            //! Fit object (MINUIT)
+   //fFitter = nullptr;            //! Fit object (MINUIT)
 
    fPolyType = in.fPolyType;             // Type of polynomials to use
    fShowCorrelation = in.fShowCorrelation;      // print correlation matrix
@@ -187,7 +187,7 @@ TMultiDimFet::TMultiDimFet(Int_t dimension,
    // Default is no options.
    //
 
-   fgInstance = this;
+   //fgInstance = this;
 
    fMeanQuantity           = 0;
    fMaxQuantity            = 0;
@@ -229,7 +229,7 @@ TMultiDimFet::TMultiDimFet(Int_t dimension,
 
    fMaxPowers.resize(dimension);
    fMaxPowersFinal.resize(dimension);
-   fFitter                 = nullptr;
+   //fFitter                 = nullptr;
 }
 
 
@@ -375,6 +375,7 @@ void TMultiDimFet::AddTestRow(const Double_t *x, Double_t D, Double_t E)
 
 
 //____________________________________________________________________
+/*
 void TMultiDimFet::Browse(TBrowser* b)
 {
    // Browse the TMultiDimFet object in the TBrowser.
@@ -423,6 +424,7 @@ void TMultiDimFet::Browse(TBrowser* b)
    if (fFitter)
       b->Add(fFitter, fFitter->GetName());
 }
+*/
 
 
 //____________________________________________________________________
@@ -661,6 +663,7 @@ void TMultiDimFet::FindParameterization(double precision)
 }
 
 //____________________________________________________________________
+/*
 void TMultiDimFet::Fit(Option_t *option)
 {
    // Try to fit the found parameterisation to the test sample.
@@ -671,7 +674,7 @@ void TMultiDimFet::Fit(Option_t *option)
    // Also, refer to
    // Begin_Html<a href="#TMultiDimFet:description">class description</a>End_Html
 
-   fgInstance = this;
+   //fgInstance = this;
 
    Int_t i, j;
    Double_t*      x    = new Double_t[fNVariables];
@@ -737,7 +740,7 @@ void TMultiDimFet::Fit(Option_t *option)
       fCoefficientsRMS(i) = err;
    }
 }
-
+*/
 
 //____________________________________________________________________
 void TMultiDimFet::MakeCandidates()
@@ -1899,10 +1902,12 @@ void TMultiDimFet::Print(Option_t *option) const
          << " Reduced Chi square over sample:        "
          << fChi2 / (fSampleSize - fNCoefficients) << std::endl
          << std::endl;
+/*
       if (fFitter) {
          fFitter->PrintResults(1,1);
          std::cout << std::endl;
       }
+*/
    }
 
    if (opt.Contains("c")){
@@ -2160,13 +2165,13 @@ Bool_t TMultiDimFet::TestFunction(Double_t squareResidual,
 
 
 //____________________________________________________________________
-void mdfHelper(int& /*npar*/, double* /*divs*/, double& chi2,
-               double* coeffs, int /*flag*/)
-{
+//void mdfHelper(int& /*npar*/, double* /*divs*/, double& chi2,
+//               double* coeffs, int /*flag*/)
+/*{
    // Helper function for doing the minimisation of Chi2 using Minuit
 
    // Get pointer  to current TMultiDimFet object.
-   TMultiDimFet* mdf = TMultiDimFet::Instance();
-   chi2     = mdf->MakeChi2(coeffs);
+  // TMultiDimFet* mdf = TMultiDimFet::Instance();
+   //chi2     = mdf->MakeChi2(coeffs);
 }
-
+*/

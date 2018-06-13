@@ -31,7 +31,7 @@
 
 #include <vector>
 
-class TBrowser;
+//class TBrowser;
 
 class TMultiDimFet : public TNamed {
 
@@ -43,7 +43,7 @@ public:
    };
 
 private:
-   static TMultiDimFet* fgInstance; //! Static instance
+   //static TMultiDimFet* fgInstance; //! Static instance
 protected:
 
    TVectorD     fQuantity;             //! Training sample, dependent quantity
@@ -117,7 +117,7 @@ protected:
    TList*       fHistograms;           //! List of histograms
    Byte_t       fHistogramMask;        //! Bit pattern of hisograms used
 
-   TVirtualFitter* fFitter;            //! Fit object (MINUIT)
+   //TVirtualFitter* fFitter;            //! Fit object (MINUIT)
 
    EMDFPolyType fPolyType;             // Type of polynomials to use
    Bool_t       fShowCorrelation;      // print correlation matrix
@@ -152,12 +152,12 @@ public:
 
    virtual void     AddRow(const Double_t *x, Double_t D, Double_t E=0);
    virtual void     AddTestRow(const Double_t *x, Double_t D, Double_t E=0);
-   void     Browse(TBrowser* b) override;
+   //void     Browse(TBrowser* b) override;
    void     Clear(Option_t *option="") override; // *MENU*
-   void     Draw(Option_t * ="d") override { }
+   //void     Draw(Option_t * ="d") override { }
    virtual Double_t Eval(const Double_t *x, const Double_t *coeff=nullptr) const;
    virtual void     FindParameterization(double precision); // *MENU*
-   virtual void     Fit(Option_t *option=""); // *MENU*
+   //virtual void     Fit(Option_t *option=""); // *MENU*
 
    Double_t         GetChi2()              const { return fChi2; }
    const TMatrixD*  GetCorrelationMatrix() const { return &fCorrelationMatrix; }
@@ -205,7 +205,7 @@ public:
    const TVectorD*  GetTestVariables()     const { return &fTestVariables; }
    const TVectorD*  GetVariables()         const { return &fVariables; }
 
-   static TMultiDimFet* Instance()               { return fgInstance; }
+   //static TMultiDimFet* Instance()               { return fgInstance; }
    Bool_t   IsFolder()             const override { return kTRUE; }
    virtual Double_t MakeChi2(const Double_t* coeff=nullptr);
    virtual void     MakeCode(const char *functionName="MDF", Option_t *option=""); // *MENU*
@@ -227,7 +227,7 @@ public:
    void ReducePolynomial(double error);
    void ZeroDoubiousCoefficients(double error);
 
-   ClassDef(TMultiDimFet,1) // Multi dimensional fit class
+   ClassDefOverride(TMultiDimFet,1) // Multi dimensional fit class
 };
 #endif  //SimG4Core_TotemRPProtonTransportParametrization_TMultiDimFet_H
 
